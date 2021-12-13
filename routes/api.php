@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::group(['prefix' => 'operator'], function () {
+    Route::post('get', 'OperatorController@get');
+    Route::post('create', 'OperatorController@store');
+    Route::post('update', 'OperatorController@update');
+    Route::post('delete', 'OperatorController@destroy');
 });
