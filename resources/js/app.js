@@ -7,6 +7,10 @@ import Vuetify from '../plugin/vuetify'
 import VueRouter from 'vue-router';
 import {routes} from './routes';
 
+window.moment = require('moment');
+
+
+
 Vue.use(VueRouter);
 
 

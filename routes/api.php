@@ -19,3 +19,16 @@ Route::group(['prefix' => 'operator'], function () {
     Route::post('update', 'OperatorController@update');
     Route::post('delete', 'OperatorController@destroy');
 });
+
+
+Route::group(['prefix' => 'order'], function () {
+
+    Route::post('save/types/work', 'OrderController@SaveTypesWork');
+    Route::post('save/work', 'OrderController@SaveOrderWork');
+    Route::post('save/work/assignment', 'OrderController@SaveWorkOrderAssignment');
+    Route::post('update', 'OrderController@UpdateOrder');
+
+    Route::get('get/supplement', 'OrderController@Getsupplement');
+    Route::post('get', 'OrderController@getOrder');
+    Route::post('get/date/order_work', 'OrderController@GetDateOrderWork');
+});
