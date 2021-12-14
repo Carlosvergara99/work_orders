@@ -8,7 +8,7 @@
           <v-toolbar-title>Operadores</v-toolbar-title>
           <v-divider class="mx-4" inset vertical></v-divider>
           <v-spacer></v-spacer>
-          <v-dialog v-model="dialog" max-width="600px">
+          <v-dialog v-model="dialog"  max-width="600px">
             <template v-slot:activator="{ on, attrs }">
               <!-- <v-container fluid> -->
               <v-btn
@@ -44,11 +44,13 @@
                       <v-text-field
                         v-model="form.code"
                         label="Código"
+                        type="number"
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12">
                       <v-text-field
                         v-model="form.cc"
+                        type="number"
                         label="Identificación"
                       ></v-text-field>
                     </v-col>
@@ -90,6 +92,18 @@
         @input="onPageChange"
       >
       </v-pagination>
+
+          <v-dialog v-model="dialogDelete" max-width="500px">
+          <v-card>
+            <v-card-title class="text-h5">Esta seguro de Eliminar el operador ?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="closeDelete">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="deleteItemConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
     </v-app>
   </div>
 </template>
@@ -131,19 +145,16 @@ export default {
         id: "",
       },
       editedIndex: -1,
-
       errors: [],
-      //  editMode: false,
-      //  formedit:{},
+      dataDelete:''
     };
   },
   mounted() {
     this.getOperators();
   },
   methods: {
-    getOperators() {
-      axios
-        .post("api/operator/get?page=" + this.pagination.current)
+    getOperators() {       
+      axios.post("api/operator/get?page=" + this.pagination.current)
         .then((response) => {
           this.data = response.data.data;
           this.pagination.current = response.data.current_page;
@@ -154,35 +165,68 @@ export default {
     onPageChange() {
       this.getOperators();
     },
-    createOperator() {
-      if (this.form.name == "") {
-        //   }else if(){
+    ValidateData(){
+           const pattern = new RegExp('^[A-Z]+$', 'i');
+
+      if (this.form.name == "" || !pattern.test(this.form.name) || /[^A-Za-z\d]/.test(this.form.name)) {
+         toast.fire({
+               icon: 'error',title: 'el campo nombre es obligatorio y valido'
+           })
+      }else if(!Number.parseInt(this.form.cc)){
+          toast.fire({
+                    icon: 'error',title: 'el campo Identificación es obligatorio y debe ser numerico'
+           })
+      }else if(!Number.parseInt(this.form.code)){
+        toast.fire({
+                 icon: 'error',title: 'el campo Código es obligatorio y debe ser numerico'
+           })
       } else {
-        axios
-          .post("api/operator/create", this.form)
-          .then((response) => {
-            this.form ={
-               name: "",
-               cc: "",
-              code: "",
-               id: "",
-            }
-            this.getOperators();
-          })
-          .catch((errors) => {});
+          this.validateFrom= true
       }
     },
+    createOperator() {
+      this.ValidateData()
+      if (this.validateFrom) {
+        axios.post("api/operator/create", this.form)
+          .then((response) => {
+             this.close()
+             this.getOperators();
+             toast.fire({
+               icon: 'success',title: 'la información se ha guardado exitosamente'
+             })
+           
+          })
+          .catch((errors) => {
+            if(errors.response.status ===422){
+                 toast.fire({
+                    icon: 'error',
+                    title: errors.response.data.data
+               })
+            }
+          });
+      }
+      
+    },
     updateOperator() {
-       if (this.form.name =="") {
-      //   //   }else if(){
-       } else {
+       this.ValidateData()
         axios.post("api/operator/update", this.form)
               .then((response) => {
                  this.getOperators() 
+                 this.close()
+                  toast.fire({
+               icon: 'success',title: 'la información se ha actualizado exitosamente'
+             })
           }).catch((errors) => {
 
+               if(errors.response.status ===422){
+                 toast.fire({
+                    icon: 'error',
+                    title: errors.response.data.data
+               })
+            }
+            
           });
-          } 
+          
        },
     save() {
       if (this.editedIndex > -1) {
@@ -190,19 +234,25 @@ export default {
       } else {
         this.createOperator();
       }
-      this.close();
+   //   this.close();
+    },
+    deleteItem(item){
+        this.dialogDelete=true
+        this.dataDelete= item.id
     },
     close() {
-      this.dialog = false;
-       this.$nextTick(() => {
-          this.editedIndex = -1
-           this.form= {
+        this.dialog = false;
+           this.$nextTick(() => {
+              this.editedIndex = -1
+               this.form= {
                 id: '',
                 name:'',
                 code:'',
                 cc:''
             }
         })
+         
+      
     },
     editItem(item){
       this.editedIndex= this.data.indexOf(item)
@@ -214,14 +264,38 @@ export default {
         }
       this.form =data
      this.dialog = true
-    }
-  
-
+    },
+     closeDelete(){
+      this.dialogDelete=false
+      this.dataDelete =''
+    },
+    deleteItemConfirm(){
+       const value={
+         'id':this.dataDelete
+       }
+       axios.post("api/operator/delete",value)
+        .then((response) => {
+          this.closeDelete()
+            toast.fire({
+               icon: 'success',title: 'el operador ha eliminado exitosamente'
+             })
+           this.getOperators()
+          
+        })
+        .catch((errors) => {
+            if(errors.response.status ===422){
+                 toast.fire({
+                    icon: 'error',
+                     title: 'no se puede eliminar el operador porque ya se encuentra asignado a una orden '
+                 });
+            }
+           })
+       }
   },
   computed: {
     formTitle() {
       return this.editedIndex === -1 ? "Crear Operador" : "Editar Operador";
-    },
+    }
   },
   watch: {
     dialog(val) {

@@ -1,6 +1,6 @@
 <template>
     <v-toolbar color="purple" dark>
-        <v-toolbar-title>Title</v-toolbar-title>
+        <v-toolbar-title>Prueba</v-toolbar-title>
 
         <v-divider class="mx-4" vertical></v-divider>
 
