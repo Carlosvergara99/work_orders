@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use App\types_work;
 use App\status;
 use App\order;
@@ -14,12 +15,30 @@ class OrderController extends Controller
   
    public function SaveTypesWork( Request $request )
    {
+      $validatedData = Validator::make( $request->all(),[
+         'code' => 'unique:types_work,code',
+     ],
+     [
+         'code.unique' => 'El Código ya exsite .',
+     ]);
+     if ($validatedData->fails()) {
+        return response()->json(['data'=>$validatedData->messages()->all()[0]],422);
+     }
     $types_work = new types_work($request->all());
     $types_work->save();
    }
 
    public function SaveOrderWork(Request $request)
    {
+      $validatedData = Validator::make( $request->all(),[
+         'order_number' => 'unique:order_work,order_number',
+     ],
+     [
+         'order_number.unique' => 'El numero de orden ya exsite .',
+     ]);
+     if ($validatedData->fails()) {
+        return response()->json(['data'=>$validatedData->messages()->all()[0]],422);
+     }
      $order=new  order_work($request->all());
      $order->save();
 
@@ -81,8 +100,7 @@ class OrderController extends Controller
        $order = order::findOrFail($request->id);
        $order->update($request->only('date_execution','value_work'));
     
-       $id = substr($request->order_work_id, 3);
-       $order_work = order_work::where('order_number',$id)->first();
+       $order_work = order_work::where('id',$request->id_order)->first();
        $order_work->status_id = $request->status_id;
        $order_work->save();
    }
